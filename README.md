@@ -34,3 +34,26 @@ poetry env use [location/of/python/version/bin/python]
 Before you start, add export POETRY_VIRTUALENVS_IN_PROJECT=1 to your .bash_profile, .bashrc, etc to make sure poetry creates the venv in this project folder and your IDE can auto-discover it. It will be kept out of source control.
 
 You can also use e.g. pyenv or virtualenv to manage Python versions (might have to upgrade the latter) and point poetry to that. Refer to the docs on how to set the right Python env: https://python-poetry.org/docs/managing-environments/.
+
+### Updating / installing dependencies
+
+You can add / remove packages individually by using
+```shell
+poetry add --group test pytest==6.1.0
+poetry remove pytest
+```
+
+The `--group test` argument adds the package to a dependency group `test`, meaning it is kept out of production dependencies and used only for local dev / CICD. Without this, it's added to the default env.
+
+In order to lock dependencies (e.g. after you've made manual edits to the `pyproject.toml`), run
+```shell
+poetry lock
+```
+
+To (then) install from the lockfile, run
+
+```shell
+poetry install --sync
+```
+
+It will warn you if the lockfile is out of date and needs to be re-locked. `--sync` argument is to also remove any packages that you manually removed from `pyproject.toml`. Editing `pyproject.toml` is probably the quickest way to update your environment. Always remember to lock after you've edited it.

@@ -1,4 +1,3 @@
-#
 import json
 from typing import Dict, List
 
@@ -14,8 +13,32 @@ BANKS = (
 BANKTRACK = "https://www.banktrack.org"
 
 
+def get_html_from_url(url: str) -> BeautifulSoup:
+    """Get the html parsed data structure from an url.
+
+    Args:
+        url (str): a valid url
+
+    Returns:
+        BeautifulSoup: a data structure representing a parsed HTML document.
+
+    """
+    page = requests.get(url)
+    soup = BeautifulSoup(page.content, "html.parser")
+    return soup
+
+
 def get_outside_banktrack_urls(soup: Tag) -> List[str]:
-    """Get all urls that link to outside banktrack."""
+    """Get all urls that link to outside banktrack.
+
+    Args:
+        soup (Tag): A data structure that represtents a HTML tag from a parsed HTML
+        document.
+
+    Returns:
+        List[str]: a list of urls.
+
+    """
     url_list = []
     for link in soup.find_all("a", href=True):
         if BANKTRACK not in link.get("href"):
@@ -24,20 +47,33 @@ def get_outside_banktrack_urls(soup: Tag) -> List[str]:
 
 
 def get_urls_for_bank(url: Tag) -> Dict[str, List[str]]:
-    """Get all urls for the bank on the policy tab on banktrack."""
-    page = requests.get(url.get("href"))
-    bank_soup = BeautifulSoup(page.content, "html.parser")
-    bank_name = bank_soup.find("span", id="maintitle").text
-    policy_files = bank_soup.find("div", class_="policyfiles")
+    """Get all urls for the bank on the policy tab on banktrack.
+
+    Args:
+        url (Tag): A HTML tag that contains a url (href)
+
+    Returns:
+        Dict[str, List[str]]: A dictionary with the bank name as key and a list
+        of urls for that bank as value.
+
+    """
+    soup = get_html_from_url(url.get("href"))
+    bank_name = soup.find("span", id="maintitle").text
+    policy_files = soup.find("div", class_="policyfiles")
     url_list = get_outside_banktrack_urls(policy_files)
     return {bank_name: url_list}
 
 
 def get_all_urls_for_banks() -> Dict[str, List[str]]:
-    """Get all the outside urls for the 60 banks on banktrack."""
+    """Get all the outside urls for the 60 banks on banktrack.
+
+    Returns:
+        Dict[str, List[str]]: A dictionary containing all the banks as key and a
+        list of urls (outside of banktrack) as value.
+
+    """
     urls = {}
-    page = requests.get(BANKS)
-    soup = BeautifulSoup(page.content, "html.parser")
+    soup = get_html_from_url(BANKS)
     banks = soup.find("div", class_="rowed banks downlist image-left")
     for bank_link in banks.find_all("a", href=True):
         urls.update(get_urls_for_bank(bank_link))
