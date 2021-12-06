@@ -35,6 +35,12 @@ Before you start, add export POETRY_VIRTUALENVS_IN_PROJECT=1 to your .bash_profi
 
 You can also use e.g. pyenv or virtualenv to manage Python versions (might have to upgrade the latter) and point poetry to that. Refer to the docs on how to set the right Python env: https://python-poetry.org/docs/managing-environments/.
 
+Installing the packages from the pyproject.toml:
+
+```shell
+poetry install --sync
+```
+
 ### Updating / installing dependencies
 
 You can add / remove packages individually by using
