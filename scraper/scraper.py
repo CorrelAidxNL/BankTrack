@@ -114,20 +114,20 @@ class Scraper:
         with open(filename, "w") as outfile:
             json.dump(json_dict, outfile)
 
-    @staticmethod
-    def read_from_json(filename: str):
+    @classmethod
+    def read_from_json(cls, filename: str) -> List[BankLinks]:
         """Read links from a json file.
 
         Args:
             filename (str): a json file
 
         Returns:
-            Dict: A dictionary with links
+            List[BankLinks]: List of banklinks
         """
         logger.info(f"Reading files from {filename}")
         with open(filename, "r") as file:
             links = json.load(file)
-        return links
+        return cls.convert_dict_to_banklinks(links)
 
     @classmethod
     def get_base_url(cls, url: str):
@@ -164,6 +164,28 @@ class Scraper:
                 the bankname and BankLinks datastructure for each bank
 
         Returns:
-            Dict[str,Dict[str,List]]: a nested dictionary
+            Dict: a dictionary
         """
         return [dict(item) for item in links]
+
+    @staticmethod
+    def convert_dict_to_banklinks(
+        links: List[Dict],
+    ) -> List[BankLinks]:
+        """Convert a dictionary to the datastructure BankLinks.
+
+        Args:
+            Dict: a dictionary
+
+        Returns:
+            links (Dict[str,BankLinks]): a dictionary with
+                the bankname and BankLinks datastructure for each bank
+        """
+        return [
+            BankLinks(
+                bank_name=item.get("bank_name"),
+                urls=item.get("urls"),
+                pdfs=item.get("pdfs"),
+            )
+            for item in links
+        ]
