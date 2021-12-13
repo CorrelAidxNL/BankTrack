@@ -1,0 +1,158 @@
+#+TITLE: Exploring possibilities for the BankTrack diffing tool
+#+AUTHOR: Tim Loderhose
+#+EMAIL: tim@loderhose.com
+#+DATE: Monday, 13 December 2021
+#+STARTUP: showall
+#+PROPERTY: header-args :exports both :session differ :kernel banktrack :cache no
+
+* Imports and Environment Variables
+:PROPERTIES:
+:visibility: folded
+:END:
+
+#+name: imports
+#+begin_src python :results silent
+import difflib
+import urllib
+from pathlib import Path
+
+import requests
+from bs4 import BeautifulSoup
+#+end_src
+
+#+name: env
+#+begin_src python :results silent
+html_dir = Path("../data/html")
+pdf_dir = Path("../data/pdf")
+#+end_src
+
+* Introduction
+
+The goal of this project is to build a body of URLs containing (links to) policy
+documents which will be scraped regularly, and alert BankTrack if any meaningful changes
+relating to the bank's policies is detected.
+
+The differ will do the job of detecting changes in the database of URLs we index. To
+build a simple prototype, we need to assume that the differs input is 'clean' HTML -
+meaning HTML devoid of encoding issues which reveals all the content which would be
+available on the website if visited with a regular browser.
+
+** Caveats
+Right away, one can imagine a number of potential issues:
+
+- simple changes like the current date, or hidden viewer counters, will alert the differ
+  - therefore, we need to make sure we only alert on relevant changes
+- content we're interested in may not be 'structurally accessible', meaning it is
+  probably best to view the raw HTML as flat text
+  - we could also try to ignore everything between <> (apart from href) to focus on text
+- Is it possible that only superficial stuff, like indentation changed? Can we be robust
+  to that?
+
+** Plan
+1. Create test data to test differ on
+   1. HTML + PDF file to start out
+2. Investigate potential diffing tools
+   1. ~git diff~ may be an easy built-in tool that would work well together with a
+      potential file system storage solution for all the files
+      - one folder per bank containing all the html files
+   2. https://docs.python.org/3/library/difflib.html is a differ built into Python's
+      stdlib
+
+* Simple test data
+
+During manual scraping, I found that the website of the [[https://www.commerzbank.de/en/nachhaltigkeit/nachhaltigkeitsstandards/nachhaltigkeitsstandards.html][Commerzbank]] (Germany) is quite
+simple HTML. Let's download it, and then add a change manually:
+#+begin_src python
+urllib.request.urlretrieve(
+    "https://www.commerzbank.de/en/nachhaltigkeit/nachhaltigkeitsstandards/nachhaltigkeitsstandards.html",
+    html_dir / "before.html",
+)
+#+end_src
+
+#+RESULTS:
+| PosixPath | (../data/html/before.html) | <http.client.HTTPMessage | at | 0x7f5aa0fe3310> |
+
+In the meanwhile, I prettified the HTML and made a new paragraph containing a link to a
+new pdf file.
+
+* Difflib
+
+Let's make a quick trial showing the diff between the two documents (using urllib to
+potentially check against a live link directly):
+#+begin_src python
+before = urllib.request.urlopen("file:../data/html/before.html").readlines()
+after = urllib.request.urlopen("file:../data/html/after.html").readlines()
+
+d = difflib.Differ()
+
+diffed = list(d.compare(before, after))
+changes = [
+    change for change in diffed if change.startswith("-") or change.startswith("+")
+]
+for change in changes:
+    print(change)
+#+end_src
+
+#+RESULTS:
+#+begin_example
++ b'\n'
++ b'                        </div>\n'
++ b'                                                <div class="target clearfix closed">\n'
++ b'\n'
++ b'                          <p>2. This is a change I introduced:\n'
++ b'                            Here is a new link:\n'
++ b'                            <a href="/media/nachhaltigkeit/ii__positionen___richtlinien_/new.pdf"\n'
++ b'                            title="see the PDF" alt="Commerzbank policy framework (PDF,\n'
++ b'                            313)" target="_blank" class="_blank">New document\n'
++ b'                            </a>\n'
++ b'                          </p>\n'
++ b'\n'
+#+end_example
+
+Using the differ directly on the list of lines containing the documents gives us the
+above.
+
+Let's first parse the content with BeautifulSoup and make the diff then:
+#+begin_src python
+soup = BeautifulSoup(content, "html")
+soup2 = BeautifulSoup(content2, "html")
+diff = d.compare(list(soup.stripped_strings), list(soup2.stripped_strings))
+changes = [
+    change for change in diff if change.startswith("-") or change.startswith("+")
+]
+for change in changes:
+    print(change)
+#+end_src
+
+#+RESULTS:
+: + 2. This is a change I introduced:
+:                             Here is a new link:
+: + New document
+
+Parsing first gives us flexibility with respect to what we recognize as differences (in
+this case actual written text).
+
+Note that lines in HTML documents are not necessarily full lines rendered (but could be
+on the same line, as is the case here actually).s
+
+* Useful links
+https://stackoverflow.com/questions/35349921/comparing-html-with-difflib
+https://github.com/mitsuhiko/htmldiff - https://github.com/edsu/htmldiff2 (fork)
+https://github.com/anastasia/htmldiffer)
+https://github.com/christian-oudard/htmltreediff (very old)
+https://github.com/bem/html-differ (JS - but seems fully featured)
+https://github.com/evolvingweb/sitediff (Ruby - also fully featureds
+
+* TODO
+
+** (big) alert on website redesign
+Across all banks, the complete redesign of a website will not be a rare occurence - if
+this happens, all stored URLs need to be updated. The differ (or perhaps even another
+tool, as some links may now be dead or forward to a new page) should alert if this
+happens, such that stored URLs can be updated.
+
+** Different options
+It should be possible to diff and alert based on text only, ie. for HTML-based
+documents. If an HTML site describes a policy, changing its wording could potentially be
+impactful (for example, in a privacy policy, changing 'will' to 'may' could alter the
+entire meaning of an important paragraph).
