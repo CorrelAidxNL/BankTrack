@@ -26,7 +26,7 @@ group.add_parser(
 )
 group.add_parser(
     "pdf",
-    help="scrape a bunch of pages for links to pdfs",
+    help="scrape bank webpages for links to pdfs",
     parents=[parser_flags],
     add_help=False,
 )

@@ -63,3 +63,22 @@ poetry install --sync
 ```
 
 It will warn you if the lockfile is out of date and needs to be re-locked. `--sync` argument is to also remove any packages that you manually removed from `pyproject.toml`. Editing `pyproject.toml` is probably the quickest way to update your environment. Always remember to lock after you've edited it.
+
+## Scraping
+
+```
+usage: main.py [-h] {banktrack,pdf} ...
+
+Scraping banks.
+
+optional arguments:
+  -h, --help           show this help message and exit
+  --filename FILENAME  file name for the json save file
+  --debug              set logger to debug
+
+actions:
+  {banktrack,pdf}
+    banktrack      scrape banktrack webpage for 60 banks
+    pdf            scrape bank webpages for links to pdfs
+
+```
