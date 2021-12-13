@@ -136,14 +136,14 @@ Note that lines in HTML documents are not necessarily full lines rendered (but c
 on the same line, as is the case here actually).s
 
 * Useful links
-https://stackoverflow.com/questions/35349921/comparing-html-with-difflib
-https://github.com/mitsuhiko/htmldiff - https://github.com/edsu/htmldiff2 (fork)
-https://github.com/anastasia/htmldiffer)
-https://github.com/christian-oudard/htmltreediff (very old)
-https://github.com/bem/html-differ (JS - but seems fully featured)
-https://github.com/evolvingweb/sitediff (Ruby - also fully featureds
+- https://stackoverflow.com/questions/35349921/comparing-html-with-difflib
+- https://github.com/mitsuhiko/htmldiff - https://github.com/edsu/htmldiff2 (fork)
+- https://github.com/anastasia/htmldiffer)
+- https://github.com/christian-oudard/htmltreediff (very old)
+- https://github.com/bem/html-differ (JS - but seems fully featured)
+- https://github.com/evolvingweb/sitediff (Ruby - also fully featured)
 
-* TODO
+* TODO Possible features
 
 ** (big) alert on website redesign
 Across all banks, the complete redesign of a website will not be a rare occurence - if
