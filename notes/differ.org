@@ -13,6 +13,7 @@
 #+name: imports
 #+begin_src python :results silent
 import difflib
+import re
 import urllib
 from pathlib import Path
 
@@ -80,12 +81,12 @@ new pdf file.
 Let's make a quick trial showing the diff between the two documents (using urllib to
 potentially check against a live link directly):
 #+begin_src python
-before = urllib.request.urlopen("file:../data/html/before.html").readlines()
-after = urllib.request.urlopen("file:../data/html/after.html").readlines()
+before = urllib.request.urlopen("file:../data/html/before.html")
+after = urllib.request.urlopen("file:../data/html/after.html")
 
 d = difflib.Differ()
 
-diffed = list(d.compare(before, after))
+diffed = list(d.compare(before.readlines(), after.readlines()))
 changes = [
     change for change in diffed if change.startswith("-") or change.startswith("+")
 ]
@@ -105,18 +106,22 @@ for change in changes:
 + b'                            title="see the PDF" alt="Commerzbank policy framework (PDF,\n'
 + b'                            313)" target="_blank" class="_blank">New document\n'
 + b'                            </a>\n'
-+ b'                          </p>\n'
++ b's                          </p>\n'
 + b'\n'
 #+end_example
 
 Using the differ directly on the list of lines containing the documents gives us the
 above.
 
-Let's first parse the content with BeautifulSoup and make the diff then:
+Let's first parse the content with BeautifulSoup and make the diff then, searching only
+for links: (with ~.find_all()~):
 #+begin_src python
-soup = BeautifulSoup(content, "html")
-soup2 = BeautifulSoup(content2, "html")
-diff = d.compare(list(soup.stripped_strings), list(soup2.stripped_strings))
+before = urllib.request.urlopen("file:../data/html/before.html")
+after = urllib.request.urlopen("file:../data/html/after.html")
+
+soup = BeautifulSoup(before.read(), "html")
+soup2 = BeautifulSoup(after.read(), "html")
+diff = d.compare(soup.find_all("a"), soup2.find_all("a"))
 changes = [
     change for change in diff if change.startswith("-") or change.startswith("+")
 ]
@@ -125,9 +130,9 @@ for change in changes:
 #+end_src
 
 #+RESULTS:
-: + 2. This is a change I introduced:
-:                             Here is a new link:
-: + New document
+: + <a alt="Commerzbank policy framework (PDF,
+:                             313)" class="_blank" href="/media/nachhaltigkeit/ii__positionen___richtlinien_/new.pdf" target="_blank" title="see the PDF">New document
+:                             </a>
 
 Parsing first gives us flexibility with respect to what we recognize as differences (in
 this case actual written text).
@@ -135,10 +140,109 @@ this case actual written text).
 Note that lines in HTML documents are not necessarily full lines rendered (but could be
 on the same line, as is the case here actually).s
 
+** BeautifulSoup regex filter before difflib:
+
+We can create regexes to easily filter HTML structures chosen for diffing:
+#+begin_src python
+regex = re.compile("(?i)(pdf)|(sustainability)|(nachhaltigkeit)")
+print(soup.find_all("a", {"href": regex}))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[<a href="/en/nachhaltigkeit/index.html" title="to Commerzbank AG website">
+<span class="offscreen">Commerzbank AG
+                          </span>
+<img alt="Commerzbank AG" height="30" src="/media/en/coba_relaunch_2010/img/commerzbank_logo.gif" width="228"/>
+</a>, <a href="/de/nachhaltigkeit/nachhaltigkeitsstandards/nachhaltigkeitsstandards.html" title="Deutsch">Deutsch
+                        </a>, <a href="/en/nachhaltigkeit/home_1/home_neu_1.html" target="" title="Home">Home
+                                  </a>, <a href="/en/nachhaltigkeit/nachhaltigkeitsstandards/nachhaltigkeitsstandards.html" target="" title="Sustainability Standards">Sustainability Standards
+                                  </a>, <a href="/en/nachhaltigkeit/governance/nachhaltige_unternehmensfuehrung.html" target="" title="Corporate Governance">Corporate
+                                  Governance
+                                  </a>, <a href="/en/nachhaltigkeit/markt___kunden/Clients.html" target="" title="Markets &amp; Clients">Markets &amp;
+                                  Clients
+                                  </a>, <a href="/en/nachhaltigkeit/gesellschaft/UmweltGesellschaft.html" target="" title="Environment &amp; Society">Environment &amp; Society
+                                  </a>, <a href="/en/nachhaltigkeit/stiftungszentrum/stiftungen.html" target="" title="Foundations">Foundations
+                                  </a>, <a href="/en/nachhaltigkeit/daten___fakten/daten___fakten.html" target="" title="Facts &amp; Figures">Facts &amp;
+                                  Figures
+                                  </a>, <a alt="Commerzbank AG" href="/en/nachhaltigkeit/index.html" title="Commerzbank
+                            AG">Commerzbank
+                            </a>, <a href="/en/nachhaltigkeit/nachhaltigkeitsstandards/positionen_und_richtlinien/positionen_und_richtlinien.html" target="" title="Positions &amp; Policies "> Positions &amp;
+                          Policies
+                          </a>, <a href="/en/nachhaltigkeit/nachhaltigkeitsstandards/leitlinien_zur_unternehmerischen_verantwortung/leitlinien_zur_unternehmerischen_verantwortung_1.html" target="" title="CR Guidelines"> CR Guidelines
+                          </a>, <a href="/en/nachhaltigkeit/nachhaltigkeitsstandards/mitgliedschaften_und_initiativen/mitgliedschaften___initiativen_1.html" target="" title="Memberships and Initiatives"> Memberships and
+                          Initiatives
+                          </a>, <a href="/en/nachhaltigkeit/nachhaltigkeitsstandards/nachhaltige_beschaffung/nachhaltige_beschaffung_.html" target="" title="Sustainable Procurement"> Sustainable
+                          Procurement
+                          </a>, <a href="/en/nachhaltigkeit/nachhaltigkeitsstandards/umweltleitlinien/umweltleitlinien.html" target="" title="Environmental guidelines"> Environmental
+                          guidelines
+                          </a>, <a href="/en/nachhaltigkeit/nachhaltigkeitsstandards/comwerte/comwert.html" target="" title="ComWerte Corporate Culture"> ComWerte
+                          Corporate Culture
+                          </a>, <a href="/en/nachhaltigkeit/nachhaltigkeitsstandards/verhaltensrichtlinie/Verhaltensgrundsaetze.html" target="" title="Code of Conduct "> Code of Conduct
+                          </a>, <a alt="More information an
+                            Commerzbank's positions and directives" class="" href="/en/nachhaltigkeit/nachhaltigkeitsstandards/positionen_und_richtlinien/positionen_und_richtlinien.html" target="" title="More information an Commerzbank's
+                            positions and directives">positions and
+                            policies
+                            </a>, <a alt="Commerzbank policy framework (PDF,
+                            313)" class="_blank" href="/media/nachhaltigkeit/ii__positionen___richtlinien_/Commerzbank_ES_Framework_EN_Final.pdf" target="_blank" title="see the PDF">Commerzbank policy
+                            framework
+                            </a>, <a alt="More information on Commerzbank's
+                                ComWerte" class="" href="/en/nachhaltigkeit/nachhaltigkeitsstandards/comwerte/comwert.html" target="" title="More information on Commerzbank's
+                                ComWerte">ComWerte
+                                </a>, <a alt="More
+                                    information on Commerzbank's Code of
+                                    Conduct" class="" href="/en/nachhaltigkeit/nachhaltigkeitsstandards/verhaltensrichtlinie/Verhaltensgrundsaetze.html" target="" title="More information on
+                                    Commerzbank's Code of Conduct">Code of Conduct
+                                    </a>, <a alt="More information on
+                                        Commerzbank's corporate responsibility
+                                        guidelines " class="" href="/en/nachhaltigkeit/nachhaltigkeitsstandards/leitlinien_zur_unternehmerischen_verantwortung/leitlinien_zur_unternehmerischen_verantwortung_1.html" target="" title="More information on
+                                        Commerzbank's corporate responsibility
+                                        guidelines ">corporate responsibility guidelines
+                                        </a>, <a alt="Information on the UN Global
+                                        Compact" class="" href="/en/nachhaltigkeit/nachhaltigkeitsstandards/mitgliedschaften_und_initiativen/un_global_compact/un_global_compact_1.html" target="" title="Information on the UN Global
+                                        Compact">UN Global Compact
+                                        </a>, <a alt="More information on Commerzbank's
+                                            environmental guidelines" class="" href="/en/nachhaltigkeit/nachhaltigkeitsstandards/umweltleitlinien/umweltleitlinien.html" target="" title="More information on
+                                            Commerzbank's environmental guidelines">environmental
+                                            guidelines
+                                            </a>, <a alt="More information on the UN Global Compact" class="" href="/en/nachhaltigkeit/nachhaltigkeitsstandards/mitgliedschaften_und_initiativen/un_global_compact/un_global_compact_1.html" target="" title="More information on the UN Global Compact">UN Global
+                          Compact
+                          </a>, <a alt="More information on Commerzbank's declaration of
+                          conformity to the German Sustainability Code" class="" href="/en/nachhaltigkeit/nachhaltigkeitsstandards/mitgliedschaften_und_initiativen/deutscher_nachhaltigkeitskodex/deutscher_nachhaltigkeitskodex.html" target="" title="More information on Commerzbank's
+                          declaration of conformity to the German Sustainability Code">German
+                          Sustainability Code
+                          </a>, <a alt="" class="" href="/en/nachhaltigkeit/nachhaltigkeitsstandards/mitgliedschaften_und_initiativen/green_finance_cluster/green_finance_cluster.html" target="" title="">Green and Sustainable Finance
+                          Cluster
+                          </a>, <a alt="more" class="" href="/en/nachhaltigkeit/nachhaltigkeitsstandards/mitgliedschaften_und_initiativen/mitgliedschaften___initiativen_1.html" target="" title="more">overview
+                          </a>]
+#+end_example
+
+
+Of course this will just find the same as above (as I only changed one link):
+#+begin_src python
+before = urllib.request.urlopen("file:../data/html/before.html")
+after = urllib.request.urlopen("file:../data/html/after.html")
+
+soup = BeautifulSoup(before.read(), "html")
+soup2 = BeautifulSoup(after.read(), "html")
+diff = d.compare(soup.find_all("a", {"href": regex}), soup2.find_all("a", {"href": regex}))
+changes = [
+    change for change in diff if change.startswith("-") or change.startswith("+")
+]
+for change in changes:
+    print(change)
+#+end_src
+
+#+RESULTS:
+: + <a alt="Commerzbank policy framework (PDF,
+:                             313)" class="_blank" href="/media/nachhaltigkeit/ii__positionen___richtlinien_/new.pdf" target="_blank" title="see the PDF">New document
+:                             </a>
+
+
 * Useful links
 - https://stackoverflow.com/questions/35349921/comparing-html-with-difflib
 - https://github.com/mitsuhiko/htmldiff - https://github.com/edsu/htmldiff2 (fork)
-- https://github.com/anastasia/htmldiffer)
+- https://github.com/anastasia/htmldiffer
 - https://github.com/christian-oudard/htmltreediff (very old)
 - https://github.com/bem/html-differ (JS - but seems fully featured)
 - https://github.com/evolvingweb/sitediff (Ruby - also fully featured)
