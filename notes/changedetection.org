@@ -1,0 +1,47 @@
+#+TITLE: Changedetection.io
+#+AUTHOR: Tim Loderhose | Machine Learning Programs
+#+EMAIL: tim.loderhose@mlprograms.com
+#+DATE: Tuesday, 11 January 2022
+#+STARTUP: showall
+#+PROPERTY: header-args :exports both :session cd :kernel banktrack :cache no
+:PROPERTIES:
+#+OPTIONS: ^:nil
+#+LATEX_COMPILER: xelatex
+#+LATEX_CLASS: mlpdoc
+#+LATEX_CLASS_OPTIONS: [logo, color, author]
+#+LATEX_HEADER: \headertitle{Change to your desired header}
+#+LATEX_HEADER: \insertauthor
+#+LATEX_HEADER: \versiondoc{v0.1 - November 19, 2020}
+#+LATEX_HEADER: \usepackage{minted}
+#+LATEX_HEADER: \setminted{bgcolor=WhiteSmoke}
+:END:
+
+* Imports and Environment Variables
+:PROPERTIES:
+:visibility: folded
+:END:
+
+#+name: imports
+#+begin_src python :results silent
+
+#+end_src
+
+#+name: env
+#+begin_src python :results silent
+
+#+end_src
+
+* Introduction
+[[changedetection.io][changedetection.io]] is a tool that on the surface does exactly what we want:
+- hosted web interface
+- add websites
+  - differ that runs in preset intervals
+
+* Put initial list of URLs on the watchlist
+
+
+#+begin_src python
+
+#+end_src
+
+* Conclusion
