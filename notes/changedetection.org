@@ -23,12 +23,14 @@
 
 #+name: imports
 #+begin_src python :results silent
-
+from pathlib import Path
+import json
 #+end_src
 
 #+name: env
 #+begin_src python :results silent
-
+data_dir = Path("../data")
+bank_urls = data_dir / "bank_urls.json"
 #+end_src
 
 * Introduction
@@ -39,9 +41,17 @@
 
 * Put initial list of URLs on the watchlist
 
-
+I checked out the ~bank_urls.json~ from Luka's =spike-scraping= branch, and will import
+these as .txt into changedetection.
 #+begin_src python
+with open(bank_urls, "r") as f:
+    bu = json.load(f)
 
+html_links = [x for bank in bu for x in bank["urls"]]
+with open(data_dir / "urls.txt", "w") as f:
+    f.writelines(map(lambda x: x + "\n", html_links))
 #+end_src
 
-* Conclusion
+#+RESULTS:
+
+This worked like a charm, and these URLs are now tracked in changedetection.
