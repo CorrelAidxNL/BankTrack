@@ -55,3 +55,93 @@ with open(data_dir / "urls.txt", "w") as f:
 #+RESULTS:
 
 This worked like a charm, and these URLs are now tracked in changedetection.
+
+* Changes in 5 days:
+Number of pages in parentheses.
+
+None of them are interesting. Changes that show up across all websites should be
+ignored.
+- this could possibly achieved by checking diffs, and ignoring changes if they occur on
+  all websites. Possibly hide all but one of the changes?
+
+** BNPParibas (4)
+- No. jobs available on all pages
+- Stock price and time
+  - will always show up
+** BOCHK (1)
+- Some news, * more links
+** USBank (2)
+- navigation - new sections
+** Unicreditgroup (1)
+- whitespace
+** Societe Generale (2)
+- stock price
+** Shinhan group (3)
+- stock price
+** RaboBank BR (1)
+- whitespace
+** Nordea (1)
+- "In Focus" showcasing articles on sustainability (links)
+** DB (12)
+- News
+- Link to ESG conference (most pages)
+** Credit Agricole (2)
+- stock price
+** Commerzbank (5)
+- date
+** China Everbright Environment Group
+- news
+
+* Changedetection.io code
+
+Quality not great, or written in a style I don't like. Ie.
+
+** Flask webapp at [[file:../../changedetection.io/changedetectionio/__init__.py::def user_loader(email):]]
+Run through an Eventlet WSGI server (https://eventlet.net/)
+
+*** [[file:../../changedetection.io/changedetectionio/__init__.py::def do_something_whenever_a_request_comes_in():]]
+Not much confidence in the code here...
+
+*** Pages
+simple enough
+
+*** [[file:../../changedetection.io/changedetectionio/__init__.py::def check_for_new_version():]]
+Sends version, UID & watch count to homepage every use.
+- returns check for new version
+
+*** [[file:../../changedetection.io/changedetectionio/__init__.py::def import_page():][Import]]
+1. Open page with GET in =/import=
+   1. renders template of import.html, Jinja2
+   2. Contains textarea which will be submitted on submit
+2. On submission, goes through URLs:
+   1. Strip
+   2. Validate
+   3. ~datastore.add_watch(url, tag="")~
+   4. Counts good and skipped URLs and redirects to index
+
+Simple to add tags.
+
+** Datastore - [[file:../../changedetection.io/changedetectionio/store.py::class ChangeDetectionStore:]]
+single JSON file storing all watches. Almost 6k lines ~6 days after start, running the
+tool twice.
+
+-
+  - This could get too large. If we have 250kB after a week, this would be a 12MB text
+    file after a year - if the number of websites indexed don't change, and if only
+    checked twice per week.
+
++
+  - If this runs as a live webservice, there is no issue with loading the JSON store, it's
+    probably append-only, which could happen once a week
+  - Can scrub history
+
+*** Deleting a watch also deletes its history
+[[file:../../changedetection.io/changedetectionio/store.py::def delete(self, uuid):]]
+
+*** [[file:../../changedetection.io/changedetectionio/store.py::def scrub_watch(self, uuid, limit_timestamp = False):]]
+Keep watch, but delete its data to keep JSON store lean.
+- probably have to do every once in a while - after backing up though!
+
+** How to interact with the repo?
+- project moves fast
+- many issues/PRs
