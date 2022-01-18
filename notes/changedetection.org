@@ -69,9 +69,11 @@ ignored.
 - Stock price and time
   - will always show up
 ** BOCHK (1)
-- Some news, * more links
+- Some news
+- more links
 ** USBank (2)
-- navigation - new sections
+- navigation
+- new sections
 ** Unicreditgroup (1)
 - whitespace
 ** Societe Generale (2)
@@ -94,13 +96,11 @@ ignored.
 
 * Changedetection.io code
 
-Quality not great, or written in a style I don't like. Ie.
-
 ** Flask webapp at [[file:../../changedetection.io/changedetectionio/__init__.py::def user_loader(email):]]
 Run through an Eventlet WSGI server (https://eventlet.net/)
 
 *** [[file:../../changedetection.io/changedetectionio/__init__.py::def do_something_whenever_a_request_comes_in():]]
-Not much confidence in the code here...
+Not much confidence in this particular bit of code here.
 
 *** Pages
 simple enough
